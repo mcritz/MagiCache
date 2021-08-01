@@ -4,11 +4,11 @@ typealias Megabytes = Double
 
 extension Megabytes {
     var bytesInt: Int {
-        Int(self * 1024 * 1024)
+        Int(self * 1048576) // (1024 * 1024)
     }
     
     var bytes: Double {
-        self * 1024 * 1024
+        self * 1048576 // (1024 * 1024)
     }
 }
 
@@ -19,9 +19,14 @@ final class MagiCache<T: Codable> {
     private let cacheDirectory: URL
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
-
     
-    public init(_ size: Megabytes = 10, identifier: String = "magicache-default") throws {
+    /// Creates an disk-backed object cache. The cache uses an `identifier` property to find the
+    /// cache on disk even between launches or processes.
+    /// - Parameters:
+    ///   - size: the cache's maximum size, in Megabytes (1048576 byte chunks)
+    ///   - identifier: an optional stringy value to identify the cache on disk. By default the identifier will use any app’s main bundle identifier, and falls back to "magicache-default" as a last resort
+    /// NOTE: The cache will use `FileManager.default.temporaryDirectory` as its base url per the best practices
+    public init(_ size: Megabytes = 10, identifier: String = Bundle.main.bundleIdentifier ?? "magicache-default") throws {
         let baseURL = FileManager.default
             .urls(for: .cachesDirectory,
                      in: .userDomainMask)
@@ -37,14 +42,11 @@ final class MagiCache<T: Codable> {
                                                 withIntermediateDirectories: true)
     }
     
-    public func availableMegabytes() throws -> Double {
-        guard let usedBytes = try FileManager.default
-                .attributesOfItem(atPath: self.cacheDirectory.path)[.size] as? Double else {
-            return size.bytes
-        }
-        return size.bytes - usedBytes
-    }
-
+    /// Retrieves a cached item from disk
+    /// - Parameter key: the identifer defined during `setValue(:, for:)`
+    /// - Returns: the cached value, if set
+    /// Note that accessing the value will alter its modification date on disk
+    /// even if the file has not been altered.
     public func value(for key: CacheKey) -> T? {
         let fileURL = cacheDirectory.appendingPathComponent(key)
         do {
@@ -60,6 +62,11 @@ final class MagiCache<T: Codable> {
         }
     }
     
+    /// Sets a codable value in a disk-backed cache with an key identifier.
+    /// Using the same identifier again will clear the previously set value with the new value.
+    /// - Parameters:
+    ///   - value: some Codable value
+    ///   - key: a Stringy identifier for retrieving the cached item
     public func setValue<T: Codable>(_ value: T, for key: CacheKey) {
         guard !key.isEmpty,
             let data = try? encoder.encode(value),
@@ -85,6 +92,7 @@ final class MagiCache<T: Codable> {
         try? data.write(to: cacheDirectory.appendingPathComponent(key))
     }
     
+    /// Empties the entire cache
     public func empty() throws {
         try FileManager.default
             .contentsOfDirectory(atPath: cacheDirectory.path)
@@ -96,7 +104,8 @@ final class MagiCache<T: Codable> {
 }
 
 extension MagiCache {
-    
+    /// Flushes last-used cache files until there is space enough for `bytes` parameter
+    /// - Parameter bytes: The size in bytes to flush
     func flush(bytes: Int) {
         guard var sortedByOldest: [(path: String, bytes: Int)] = try? newestItemsWithSizes() else {
             return
@@ -112,7 +121,9 @@ extension MagiCache {
             #if DEBUG
             print("flushing: \($0)")
             #endif
-            // TODO: Set up a custom FileManager Delegate?
+            // IDEA: Set up a custom FileManager Delegate?
+            // We could do some just-in-time check prior to delete, better
+            // support concurrency or handle failures with a retry
             do {
                 try FileManager.default.removeItem(atPath: $0)
             } catch {
@@ -121,16 +132,24 @@ extension MagiCache {
         }
     }
     
+    /// Convenience method for finding the modification date of an item at a path
+    /// - Parameter path: filesystem path to an item on disk
+    /// - Returns: the modification date, if set
     func modificationDate(of path: String) -> Date? {
         try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date
     }
     
+    /// Convenience method for finding the disk bytes of the item at `path`
+    /// - Parameter path: filesystem path to an item on disk
+    /// - Returns: Filesize in bytes
     func itemBytes(at path: String) -> Int? {
         // NOTE: FileAttributes.size excludes resource forks
         // As we aren’t setting any resource forks, this should be fine.
         try? FileManager.default.attributesOfItem(atPath: path)[.size] as? Int
     }
     
+    /// Gets the sum of all items in cache
+    /// - Returns: size of all items in bytes
     func usedCacheBytes() throws -> Int {
         let paths = try allCachedItemsPaths()
         return paths.reduce(0) { result, path in
@@ -140,11 +159,15 @@ extension MagiCache {
         }
     }
     
-    func available() throws -> Int {
+    /// Gets the available cache size
+    /// - Returns: size in bytes
+    public func available() throws -> Int {
         let used = try usedCacheBytes()
         return size.bytesInt - used
     }
     
+    /// Gets all items in cache
+    /// - Returns: full paths of all items
     func allCachedItemsPaths() throws -> [String] {
         var paths = try FileManager.default.contentsOfDirectory(atPath: cacheDirectory.path)
         paths = paths.map {
@@ -152,7 +175,9 @@ extension MagiCache {
         }
         return paths
     }
-
+    
+    /// Gets all the items in cache sorted by newest modification date
+    /// - Returns: full paths of all items
     func newestPathItems() throws -> [String] {
         var paths = try allCachedItemsPaths()
         paths.sort { prev, next in
@@ -166,6 +191,8 @@ extension MagiCache {
         return paths
     }
     
+    /// Gets all items in cache with their size in bytes
+    /// - Returns: Array of Tuples with `path` full path of item and `bytes` item's size in bytes
     func newestItemsWithSizes() throws -> [(path: String, bytes: Int)]{
         let sortedByOldest = try newestPathItems()
         return sortedByOldest.compactMap { path in

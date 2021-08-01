@@ -3,7 +3,7 @@ import MagiCache
 
 @propertyWrapper public struct Cached<T: Codable> {
     let key: String
-    var storage = MagiCache<T>(identifier: "default")
+    var storage = MagiCache<T>()
 
     public var wrappedValue: T? {
         get {
@@ -30,7 +30,7 @@ final class MagiCache<T: Codable> {
     private let decoder = JSONDecoder()
 
     
-    public init(_ size: Megabytes = 100, identifier: String = "magicache-default") {
+    public init(_ size: Megabytes = 100, identifier: String = Bundle.main.bundleIdentifier ?? "magicache-default") {
         let baseURL = FileManager.default
             .urls(for: .cachesDirectory,
                      in: .userDomainMask)
@@ -114,12 +114,12 @@ struct FancyValue {
     }
 }
 
-var fv = FancyValue(256)
-print(fv.count)
-fv.count = 1
-print(fv.count)
-
-let cache = MagiCache<Int>(identifier: "magicache-playground")
+//var fv = FancyValue(256)
+//print(fv.count)
+//fv.count = 1
+//print(fv.count)
+//
+let cache = MagiCache<Int>()
 
 for idx in 1...100 {
     cache.setValue(idx, for: "\(idx)")

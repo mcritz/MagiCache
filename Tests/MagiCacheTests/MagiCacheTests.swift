@@ -46,11 +46,11 @@ final class MagiCacheTests: XCTestCase {
         XCTAssertTrue(folderContents.isEmpty, "cache.empty() should empty all the cache contents")
     }
     
-    func testAvailableMegabytes() throws {
-        let before = try cache.availableMegabytes()
+    func testAvailable() throws {
+        let before = try cache.available()
         let prettyLargeString = String(repeating: "X", count: 500)
         cache.setValue(prettyLargeString, for: "someKey")
-        let after = try cache.availableMegabytes()
+        let after = try cache.available()
         XCTAssert(before > after, "availableMegabytes() will be smaller when things are added to the cache")
     }
     
