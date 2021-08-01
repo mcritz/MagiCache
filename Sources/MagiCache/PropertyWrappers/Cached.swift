@@ -14,14 +14,14 @@
 /// `@Cached<Int>(key: "meaningOfLife", value: 42) var meaningOfLife`
 @propertyWrapper public struct Cached<T: Codable> {
     let key: String
-    var storage = MagiCache<T>(identifier: "default")
+    var storage = try? MagiCache<T>(identifier: "default")
 
     public var wrappedValue: T? {
         get {
-            storage.value(for: key)
+            storage?.value(for: key)
         }
         set {
-            storage.setValue(newValue, for: key)
+            storage?.setValue(newValue, for: key)
         }
     }
     
