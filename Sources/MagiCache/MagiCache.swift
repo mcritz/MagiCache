@@ -9,6 +9,7 @@ final class MagiCache<T: Codable> {
     private let decoder = JSONDecoder()
     
     public enum Errors: Error {
+        case invalidCacheSize
         case invalidObjectKey
         case objectIsLargerThanCache
     }
@@ -23,6 +24,9 @@ final class MagiCache<T: Codable> {
     ///
     /// NOTE: The cache will use `Caches` directory as its base url per the best practices
     public init(_ size: Megabytes = 10, identifier: String = Bundle.main.bundleIdentifier ?? "magicache-default") throws {
+        guard size > 0 else {
+            throw Errors.invalidCacheSize
+        }
         self.cacheDirectory = try FileManager.default
             .url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             .appendingPathComponent(identifier)

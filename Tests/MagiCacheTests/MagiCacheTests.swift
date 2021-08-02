@@ -14,8 +14,28 @@ final class MagiCacheTests: XCTestCase {
     
     func testInitWithMaximumSize() throws {
         let size = 10.0
-        let cache = try MagiCache<Int>(size)
+        let cache = try MagiCache<Int>(size, identifier: testID)
         XCTAssertEqual(cache.size, size, "Can be initialized with a maximum allowed size")
+    }
+    
+    func testInitWithInvalidSize() throws {
+        let size = -10.0
+        XCTAssertThrowsError(try MagiCache<Int>(size, identifier: testID), "it throws if the cache size is negative")
+        
+        let zero = 0.0
+        XCTAssertThrowsError(try MagiCache<Int>(zero, identifier: testID), "it throws if the cache size is zero")
+    }
+    
+    func testOverflowInit() throws {
+        let size = 0.01
+        let cache = try MagiCache<String>(size, identifier: testID)
+        let overflowValue = String(repeating: "Z", count: 100_000)
+        XCTAssertThrowsError(try cache.setValue(overflowValue, for: "NOPE"), "it won't cache values that exceed the cache size")
+    }
+    
+    func testValidKey() throws {
+        let lifeEtc = "Fourty-Two"
+        XCTAssertThrowsError(try cache.setValue(lifeEtc, for: ""), "it won't cache if the key is invalid")
     }
     
     func testAddAndRetrieveItem() throws {
