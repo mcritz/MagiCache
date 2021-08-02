@@ -22,22 +22,22 @@ final class MagiCacheTests: XCTestCase {
         let testValue = "Cache me, please"
         let id = "PersistantValueID"
         
-        cache.setValue(testValue, for: id)
+        try cache.setValue(testValue, for: id)
         let cachedValue = try XCTUnwrap(cache.value(for: id))
         XCTAssertEqual(testValue, cachedValue)
     }
     
     func testValueForSameKey() throws {
         let oldValue = "Obi Wan in Episode IV"
-        cache.setValue(oldValue, for: "obiwan")
+        try cache.setValue(oldValue, for: "obiwan")
         let newValue = "Obi Wan in Episode I"
-        cache.setValue(newValue, for: "obiwan")
+        try cache.setValue(newValue, for: "obiwan")
         let cachedValue = cache.value(for: "obiwan")
         XCTAssertEqual(newValue, cachedValue, "New values overwrite old values")
     }
     
     func testClearCache() throws {
-        cache.setValue("Another cached value", for: "testClearCache")
+        try cache.setValue("Another cached value", for: "testClearCache")
         let existingFiles = try FileManager.default.contentsOfDirectory(atPath: testPath())
         XCTAssertFalse(existingFiles.isEmpty, "File created. Caching works.")
         
@@ -49,7 +49,7 @@ final class MagiCacheTests: XCTestCase {
     func testAvailable() throws {
         let before = try cache.available()
         let prettyLargeString = String(repeating: "X", count: 500)
-        cache.setValue(prettyLargeString, for: "someKey")
+        try cache.setValue(prettyLargeString, for: "someKey")
         let after = try cache.available()
         XCTAssert(before > after, "availableMegabytes() will be smaller when things are added to the cache")
     }
@@ -62,9 +62,9 @@ final class MagiCacheTests: XCTestCase {
         let lotsOfA: Data = String(repeating: "A", count: 500_000).data(using: .utf8)! // 666670 bytes
         let lotsOfB: Data = String(repeating: "B", count: 200_000).data(using: .utf8)! // 266670 bytes
         let lotsOfC: Data = String(repeating: "C", count: 400_000).data(using: .utf8)! // 533338 bytes
-        dataCache.setValue(lotsOfA, for: "aaa")
-        dataCache.setValue(lotsOfB, for: "bbb")
-        dataCache.setValue(lotsOfC, for: "ccc")
+        try dataCache.setValue(lotsOfA, for: "aaa")
+        try dataCache.setValue(lotsOfB, for: "bbb")
+        try dataCache.setValue(lotsOfC, for: "ccc")
         
         // 1_048_576 (1MB Cache Size)
         // 666670 + 266670 = 933340 (A + B)
@@ -79,6 +79,29 @@ final class MagiCacheTests: XCTestCase {
         
         XCTAssertNil(dataCache.value(for: "aaa"), "If a new item would cause the cache to exceed the allowed size, it should remove the least recently used elements until space is available")
     }
+    
+    func testPerformance() {
+        let valueQQ = Data.random(10_000_000)
+        let valueTT = Data.random(10_000_000)
+        let valueUU = Data.random(10_000_000)
+
+        measure { // Author’s baseline is ≈0.6 seconds
+            do {
+                let niceCache = try MagiCache<Data>(60, identifier: testID)
+                try niceCache.setValue(valueQQ, for: "QQ")
+                try niceCache.setValue(valueTT, for: "TT")
+                try niceCache.setValue(valueUU, for: "UU")
+                let qq = niceCache.value(for: "QQ")
+                let tt = niceCache.value(for: "TT")
+                let uu = niceCache.value(for: "UU")
+                XCTAssertEqual(valueQQ, qq)
+                XCTAssertEqual(valueTT, tt)
+                XCTAssertEqual(valueUU, uu)
+            } catch {
+                XCTFail("Could not run performance test:\n\t\(error.localizedDescription)")
+            }
+        }
+    }
 }
 
 extension MagiCacheTests {
@@ -90,5 +113,23 @@ extension MagiCacheTests {
             .appendingPathComponent(testID)
         let testPath = try XCTUnwrap(testURL?.path)
         return testPath
+    }
+}
+
+fileprivate extension Data {
+    static func random(_ size: Int) -> Data {
+        var value = ""
+        for _ in 0...size {
+            value.append(String.randomAlphanumeric())
+        }
+        return value.data(using: .ascii)!
+    }
+}
+
+fileprivate extension String {
+    static func randomAlphanumeric() -> String {
+        "1234567890abcdefghijklmnopqrstuvwxyz".randomElement().map {
+            Bool.random() ? String($0).capitalized : String($0)
+        }!
     }
 }
