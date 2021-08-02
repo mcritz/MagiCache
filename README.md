@@ -22,6 +22,20 @@ Features are under test. Try running tests in Xcode or using `swift test`.
     - MagiCache only relies on Foundation, so it’s really versatile
 - [x] It should prevent other instances of the cache from modifying its tracked data, or recalculate the used size if other cache instances modify the data on disk
     - MagiCache avoids lots of internal bookkeeping and does most cache calculations on the fly. The files in the cache are the source of truth.
+    
+### PropertyWrapper
+
+I authored `@Cached`: a Swift propertyWrapper for fun to allow developers to easily add cache-backed properties.
+
+This initializes an empty, but MagiCache-backed property:
+`@Cached<String>(key: "greeting") var hello`
+
+ This format initializes a MagiCache-backed property with an initial value
+`@Cached<Int>(key: "meaningOfLife", value: 42) var meaningOfLife`
+
+ A powerful use case would be to just cache bytes themselves wrapped in `Data`
+`@Cached<Data>(key: "myPrecious") var theOneRing`
+
 
 ### Feature Ideas
 
