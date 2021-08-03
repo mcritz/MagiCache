@@ -1,6 +1,6 @@
 import Foundation
 
-public final class MagiCache<T: Codable> {
+public final class MagiCache {
     public typealias CacheKey = String
     
     public private(set) var size: Megabytes
@@ -45,7 +45,8 @@ public final class MagiCache<T: Codable> {
     /// even if the file has not been altered.
     /// Values in the cache are ephemeral and can be voided by adding more items
     /// than the maxium cache size, using the `MagiCache.empty()` method, etc.
-    public func value(for key: CacheKey) -> T? {
+    public func value<T>(_ type: T.Type, for key: CacheKey) -> T? where T: Decodable {
+        UserDefaults.standard.string(forKey: "Yo")
         let fileURL = cacheDirectory.appendingPathComponent(key)
         do {
             try FileManager.default.setAttributes(

@@ -21,11 +21,11 @@
 /// `@Cached<Data>(key: "myPrecious") var theOneRing`
 @propertyWrapper public struct Cached<T: Codable> {
     let key: String
-    private var storage = try? MagiCache<T>()
+    private var storage = try? MagiCache()
 
     public var wrappedValue: T? {
         get {
-            storage?.value(for: key)
+            storage?.value(T.self, for: key)
         }
         set {
             do {

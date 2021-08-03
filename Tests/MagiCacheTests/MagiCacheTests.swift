@@ -4,7 +4,7 @@ import XCTest
 final class MagiCacheTests: XCTestCase {
     private let testID = "magicache-tests"
     
-    var cache: MagiCache<String>!
+    var cache: MagiCache!
     
     override func setUpWithError() throws { cache = try MagiCache(1, identifier: testID) }
     override func tearDownWithError() throws {
@@ -14,21 +14,21 @@ final class MagiCacheTests: XCTestCase {
     
     func testInitWithMaximumSize() throws {
         let size = 10.0
-        let cache = try MagiCache<Int>(size, identifier: testID)
+        let cache = try MagiCache(size, identifier: testID)
         XCTAssertEqual(cache.size, size, "Can be initialized with a maximum allowed size")
     }
     
     func testInitWithInvalidSize() throws {
         let size = -10.0
-        XCTAssertThrowsError(try MagiCache<Int>(size, identifier: testID), "it throws if the cache size is negative")
+        XCTAssertThrowsError(try MagiCache(size, identifier: testID), "it throws if the cache size is negative")
         
         let zero = 0.0
-        XCTAssertThrowsError(try MagiCache<Int>(zero, identifier: testID), "it throws if the cache size is zero")
+        XCTAssertThrowsError(try MagiCache(zero, identifier: testID), "it throws if the cache size is zero")
     }
     
     func testOverflowInit() throws {
         let size = 0.01
-        let cache = try MagiCache<String>(size, identifier: testID)
+        let cache = try MagiCache(size, identifier: testID)
         let overflowValue = String(repeating: "Z", count: 100_000)
         XCTAssertThrowsError(try cache.setValue(overflowValue, for: "NOPE"), "it won't cache values that exceed the cache size")
     }
@@ -43,8 +43,14 @@ final class MagiCacheTests: XCTestCase {
         let id = "PersistantValueID"
         
         try cache.setValue(testValue, for: id)
-        let cachedValue = try XCTUnwrap(cache.value(for: id))
-        XCTAssertEqual(testValue, cachedValue)
+        let cachedValue = try XCTUnwrap(cache.value(String.self, for: id))
+        XCTAssertEqual(testValue, cachedValue, "Cache can retrieve an item")
+        
+        let intID = "zip"
+        let zipCode = 94122
+        try cache.setValue(zipCode, for: intID)
+        let cachedInt = try XCTUnwrap(cache.value(Int.self, for: intID))
+        XCTAssertEqual(zipCode, cachedInt, "Cache can store multiple value types")
     }
     
     func testValueForSameKey() throws {
@@ -52,7 +58,7 @@ final class MagiCacheTests: XCTestCase {
         try cache.setValue(oldValue, for: "obiwan")
         let newValue = "Obi Wan in Episode I"
         try cache.setValue(newValue, for: "obiwan")
-        let cachedValue = cache.value(for: "obiwan")
+        let cachedValue = cache.value(String.self, for: "obiwan")
         XCTAssertEqual(newValue, cachedValue, "New values overwrite old values")
     }
     
@@ -75,7 +81,7 @@ final class MagiCacheTests: XCTestCase {
     }
     
     func testItemExceedsMaxSize() throws {
-        let dataCache = try MagiCache<Data>(1, identifier: testID)
+        let dataCache = try MagiCache(1, identifier: testID)
         defer {
             try? dataCache.empty()
         }
@@ -94,27 +100,28 @@ final class MagiCacheTests: XCTestCase {
         XCTAssertEqual(try dataCache.available(), 248568, "Available cache is the size minus the two most recently added items that fit")
         
         ["bbb", "ccc"].forEach { key in
-            XCTAssertNotNil(dataCache.value(for: key))
+            XCTAssertNotNil(dataCache.value(Data.self, for: key))
         }
         
-        XCTAssertNil(dataCache.value(for: "aaa"), "If a new item would cause the cache to exceed the allowed size, it should remove the least recently used elements until space is available")
+        XCTAssertNil(dataCache.value(Data.self, for: "aaa"), "If a new item would cause the cache to exceed the allowed size, it should remove the least recently used elements until space is available")
     }
     
     func testPerformance() {
         print("\n\nHEAD’S UP! Testing performance. This could take up to 30 seconds on a slow machine.\n\n")
-        let valueQQ = Data.random(10_000_000)
-        let valueTT = Data.random(10_000_000)
-        let valueUU = Data.random(10_000_000)
+        let dataSize = 10_000_000
+        let valueQQ = Data.random(dataSize)
+        let valueTT = Data.random(dataSize)
+        let valueUU = Data.random(dataSize)
 
         measure { // Author’s baseline is ≈0.6 seconds
             do {
-                let niceCache = try MagiCache<Data>(60, identifier: testID)
+                let niceCache = try MagiCache(60, identifier: testID)
                 try niceCache.setValue(valueQQ, for: "QQ")
                 try niceCache.setValue(valueTT, for: "TT")
                 try niceCache.setValue(valueUU, for: "UU")
-                let qq = niceCache.value(for: "QQ")
-                let tt = niceCache.value(for: "TT")
-                let uu = niceCache.value(for: "UU")
+                let qq = niceCache.value(Data.self, for: "QQ")
+                let tt = niceCache.value(Data.self, for: "TT")
+                let uu = niceCache.value(Data.self, for: "UU")
                 XCTAssertEqual(valueQQ, qq)
                 XCTAssertEqual(valueTT, tt)
                 XCTAssertEqual(valueUU, uu)
