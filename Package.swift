@@ -4,9 +4,9 @@ import PackageDescription
 let package = Package(
     name: "MagiCache",
     platforms: [
-        .macOS(.v10_12),
-        .iOS(.v10),
-        .tvOS(.v10),
+        .macOS(.v10_14),
+        .iOS(.v13),
+        .tvOS(.v13),
         .watchOS(.v6)
     ],
     products: [

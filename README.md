@@ -11,7 +11,8 @@ Features are under test. Try running tests in Xcode or using `swift test`.
 - [x] If a new item would cause the cache to exceed the allowed size, it should remove the least recently used elements until space is available
     - In addition, the entire cache can be cleared with `.empty()`
 - [x] It should survive app restart
-    - MagiCache relies on the `Caches` directory per the best practices and "should" survive a restart. But the 
+    - MagiCache relies on the `Caches` directory per the best practices and cached items "should" survive a restart. But being a good platform citizen means we should expect that our cached data is ephemeral and could be voided by the OS.
+    - 
 - [x] It should support iOS, tvOS at least
     - ✅ 📱 iOS
     - ✅ 📺 tvOS
@@ -33,7 +34,7 @@ This initializes an empty, but MagiCache-backed property:
  This format initializes a MagiCache-backed property with an initial value
 `@Cached<Int>(key: "meaningOfLife", value: 42) var meaningOfLife`
 
- A powerful use case would be to just cache bytes themselves wrapped in `Data`
+ A powerful use case would be to just cache bytes wrapped in `Data`
 `@Cached<Data>(key: "myPrecious") var theOneRing`
 
 
@@ -59,4 +60,4 @@ This initializes an empty, but MagiCache-backed property:
 
 4. Support compression
 
-    This could be a lot of fun and have some real benefits. https://developer.apple.com/documentation/compression
+    This could be a lot of fun and have some real benefits. [Reference](https://developer.apple.com/documentation/compression)

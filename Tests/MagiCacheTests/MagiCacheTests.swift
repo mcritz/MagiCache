@@ -124,7 +124,7 @@ final class MagiCacheTests: XCTestCase {
     }
 }
 
-extension MagiCacheTests {
+private extension MagiCacheTests {
     func testPath() throws -> String {
         let testURL = FileManager.default
             .urls(for: .cachesDirectory,
@@ -136,7 +136,7 @@ extension MagiCacheTests {
     }
 }
 
-fileprivate extension Data {
+private extension Data {
     static func random(_ size: Int) -> Data {
         var value = ""
         for _ in 0...size {
@@ -146,7 +146,7 @@ fileprivate extension Data {
     }
 }
 
-fileprivate extension String {
+private extension String {
     static func randomAlphanumeric() -> String {
         "1234567890abcdefghijklmnopqrstuvwxyz".randomElement().map {
             Bool.random() ? String($0).capitalized : String($0)
