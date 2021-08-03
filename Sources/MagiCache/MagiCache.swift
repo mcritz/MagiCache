@@ -1,7 +1,7 @@
 import Foundation
 
-final class MagiCache<T: Codable> {
-    typealias CacheKey = String
+public final class MagiCache<T: Codable> {
+    public typealias CacheKey = String
     
     public private(set) var size: Megabytes
     private let cacheDirectory: URL

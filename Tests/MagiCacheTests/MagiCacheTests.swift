@@ -101,6 +101,7 @@ final class MagiCacheTests: XCTestCase {
     }
     
     func testPerformance() {
+        print("\n\nHEAD’S UP! Testing performance. This could take up to 30 seconds on a slow machine.\n\n")
         let valueQQ = Data.random(10_000_000)
         let valueTT = Data.random(10_000_000)
         let valueUU = Data.random(10_000_000)
@@ -124,6 +125,7 @@ final class MagiCacheTests: XCTestCase {
     }
 }
 
+// MARK: - Helpers
 private extension MagiCacheTests {
     func testPath() throws -> String {
         let testURL = FileManager.default

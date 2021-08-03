@@ -7,12 +7,12 @@
 Features are under test. Try running tests in Xcode or using `swift test`. 
 
 - [x] Can be initialized with a maximum allowed size
-    - Max size is a "Must" requirement in this implementation, but can be circumvented by passing `Int.max` to the initializer.
+    - Max size is a "Must" requirement in this implementation, but _can_ be circumvented by passing `Int.max` to the initializer.
 - [x] If a new item would cause the cache to exceed the allowed size, it should remove the least recently used elements until space is available
     - In addition, the entire cache can be cleared with `.empty()`
 - [x] It should survive app restart
+    - Assuming “it” is the cached data. Though, it’d be easy enough to serialize an instance of MagiCache by extending it to conform to Codable and stashing it in `UserDefaults`, or `plist` somewhere on disk.
     - MagiCache relies on the `Caches` directory per the best practices and cached items "should" survive a restart. But being a good platform citizen means we should expect that our cached data is ephemeral and could be voided by the OS.
-    - 
 - [x] It should support iOS, tvOS at least
     - ✅ 📱 iOS
     - ✅ 📺 tvOS
